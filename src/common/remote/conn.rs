@@ -5,7 +5,7 @@ use futures::stream::StreamExt;
 use futures::SinkExt;
 
 use std::sync::{Arc, Mutex};
-use std::{error::Error, pin::Pin, time::Duration};
+use std::{error::Error, time::Duration};
 
 use crate::api::client_config::ClientConfig;
 use crate::common::remote::request::client_request::{
@@ -146,16 +146,20 @@ impl Connection {
         }
     }
 
-    pub(crate) async fn next_payload(&mut self) -> Payload {
+    pub(crate) async fn next_server_request(
+        &mut self,
+    ) -> crate::api::error::Result<Box<dyn Request>> {
+        payload_helper::build_server_request(self.next_server_req_payload().await)
+    }
+
+    /// Listen a server_request from server by bi_receiver
+    async fn next_server_req_payload(&mut self) -> Payload {
         loop {
             match self.state {
                 State::Connected {
                     ref mut bi_receiver,
                     ..
-                } => match Pin::new(bi_receiver.to_owned().lock().unwrap())
-                    .next()
-                    .await
-                {
+                } => match bi_receiver.to_owned().lock().unwrap().next().await {
                     Some(Ok(payload)) => return payload,
                     Some(Err(status)) => {
                         println!("error from stream {}", status);
@@ -176,7 +180,27 @@ impl Connection {
         }
     }
 
-    pub(crate) async fn send_req(
+    /// Reply a client_resp to server by bi_sender
+    pub(crate) async fn reply_client_resp(&mut self, resp: impl Response + serde::Serialize) {
+        match self.state {
+            State::Connected {
+                ref mut bi_sender, ..
+            } => bi_sender
+                .to_owned()
+                .lock()
+                .unwrap()
+                .send((
+                    payload_helper::build_resp_grpc_payload(resp),
+                    grpcio::WriteFlags::default(),
+                ))
+                .await
+                .unwrap(),
+            State::Disconnected(_) => self.connect().await,
+        }
+    }
+
+    /// Send a client_req, with get a server_resp
+    pub(crate) async fn send_client_req(
         &mut self,
         req: impl Request + serde::Serialize,
     ) -> crate::api::error::Result<Box<dyn Response>> {
@@ -192,24 +216,6 @@ impl Connection {
                     "Disconnected, please try again.",
                 )))
             }
-        }
-    }
-
-    pub(crate) async fn send_resp(&mut self, resp: impl Response + serde::Serialize) {
-        match self.state {
-            State::Connected {
-                ref mut bi_sender, ..
-            } => bi_sender
-                .to_owned()
-                .lock()
-                .unwrap()
-                .send((
-                    payload_helper::build_resp_grpc_payload(resp),
-                    grpcio::WriteFlags::default(),
-                ))
-                .await
-                .unwrap(),
-            State::Disconnected(_) => self.connect().await,
         }
     }
 }
@@ -230,12 +236,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_next_payload() {
+    async fn test_next_server_request() {
         println!("test_next_payload");
         let mut remote_connect =
             Connection::new(ClientConfig::new().server_addr("0.0.0.0:9848".to_string()));
-        let payload = remote_connect.next_payload().await;
-        let server_req = payload_helper::build_server_request(payload).unwrap();
+        let server_req = remote_connect.next_server_request().await.unwrap();
     }
 
     #[tokio::test]
