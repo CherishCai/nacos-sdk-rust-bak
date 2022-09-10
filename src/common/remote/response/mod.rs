@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 
+pub(crate) mod client_response;
 pub(crate) mod server_response;
 
 pub(crate) trait Response {
@@ -20,5 +21,15 @@ lazy_static! {
 
     /// com.alibaba.nacos.api.remote.response.HealthCheckResponse
     pub static ref TYPE_HEALTH_CHECK_SERVER_RESPONSE: String = String::from("HealthCheckResponse");
+
+    /// com.alibaba.nacos.api.remote.response.ConnectResetResponse
+    pub static ref TYPE_CONNECT_RESET_CLIENT_RESPONSE: String = String::from("ConnectResetResponse");
+
+    /// com.alibaba.nacos.api.remote.response.ClientDetectionResponse
+    pub static ref TYPE_CLIENT_DETECTION_CLIENT_RESPONSE: String = String::from("ClientDetectionResponse");
+
+    // --- config client resp ---
+    /// com.alibaba.nacos.api.config.remote.response.ConfigChangeNotifyResponse
+    pub static ref TYPE_CONFIG_CHANGE_NOTIFY_CLIENT_RESPONSE: String = String::from("ConfigChangeNotifyResponse");
 
 }

@@ -17,6 +17,7 @@
 pub mod api;
 
 mod common;
+mod config;
 
 mod nacos_proto {
     pub mod v2 {

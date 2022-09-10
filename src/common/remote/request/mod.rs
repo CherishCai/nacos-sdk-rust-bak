@@ -29,6 +29,10 @@ lazy_static! {
     /// com.alibaba.nacos.api.remote.request.ClientDetectionRequest
     pub static ref TYPE_CLIENT_DETECTION_SERVER_REQUEST: String = String::from("ClientDetectionRequest");
 
+    // --- config server req ---
+    /// com.alibaba.nacos.api.config.remote.request.ConfigChangeNotifyRequest
+    pub static ref TYPE_CONFIG_CHANGE_NOTIFY_SERVER_REQUEST: String = String::from("ConfigChangeNotifyRequest");
+
 }
 
 // odd by client request id.

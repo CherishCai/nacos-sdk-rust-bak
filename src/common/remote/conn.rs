@@ -16,7 +16,7 @@ use crate::common::remote::response::Response;
 use crate::common::util::*;
 use crate::nacos_proto::v2::{BiRequestStreamClient, Payload, RequestClient};
 
-// #[derive(Debug)]
+#[derive(Clone)]
 pub struct Connection {
     client_config: ClientConfig,
     state: State,
@@ -28,7 +28,7 @@ pub struct Connection {
 // stream just adds a heap pointer dereference, slightly penalizing polling
 // the stream in most cases. so, don't listen to clippy on this.
 #[allow(clippy::large_enum_variant)]
-// #[derive(Debug)]
+#[derive(Clone)]
 enum State {
     Connected {
         conn_id: String,
@@ -115,7 +115,7 @@ impl Connection {
     }
 
     /// Listen a server_request from server by bi_receiver
-    async fn next_server_req_payload(&mut self) -> Payload {
+    pub(crate) async fn next_server_req_payload(&mut self) -> Payload {
         loop {
             match self.state {
                 State::Connected {
@@ -187,7 +187,8 @@ mod tests {
     use crate::api::client_config::ClientConfig;
     use crate::common::remote::conn::Connection;
     use crate::common::remote::request::server_request::ClientDetectionServerRequest;
-    use crate::common::remote::request::TYPE_CLIENT_DETECTION_SERVER_REQUEST;
+    use crate::common::remote::request::{Request, TYPE_CLIENT_DETECTION_SERVER_REQUEST};
+    use crate::common::remote::response::client_response::ClientDetectionClientResponse;
     use crate::common::util::payload_helper;
 
     #[tokio::test]
@@ -209,6 +210,11 @@ mod tests {
         if TYPE_CLIENT_DETECTION_SERVER_REQUEST.eq(&type_url) {
             let de = ClientDetectionServerRequest::from(body_json_str.as_str());
             let de = de.headers(headers);
+            remote_connect
+                .reply_client_resp(ClientDetectionClientResponse::new(
+                    de.get_request_id().clone(),
+                ))
+                .await;
         }
     }
 
