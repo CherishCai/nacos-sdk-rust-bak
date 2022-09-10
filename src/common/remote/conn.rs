@@ -40,38 +40,6 @@ enum State {
     Disconnected(Duration),
 }
 
-/*
-macro_rules! with_client {
-    ($me:ident, $client:ident, $bi_sender:ident, $block:expr) => ({
-        loop {
-            match $me.state {
-                State::Connected { client: ref mut $client, bi_sender: ref mut $bi_sender, .. } => {
-                    match $block {
-                        Ok(resp) => break Ok(resp),
-                        // If the error is a `h2::Error`, that indicates
-                        // something went wrong at the connection level, rather
-                        // than the server returning an error code. In that
-                        // case, let's try reconnecting...
-                        Err(error) if error.source().iter().any(|src| src.is::<h2::Error>()) => {
-                            tracing::warn!(
-                                error = %error,
-                                "connection error sending command"
-                            );
-                            $me.state = State::Disconnected(Self::BACKOFF);
-                        }
-                        // Otherwise, return the error.
-                        Err(e) => {
-                            break Err(e);
-                        }
-                    }
-                }
-                State::Disconnected(_) => $me.connect().await,
-            }
-        }
-    })
-}
-*/
-
 impl Connection {
     const BACKOFF: Duration = Duration::from_millis(500);
 
@@ -87,14 +55,14 @@ impl Connection {
 
         while let State::Disconnected(backoff) = self.state {
             if backoff == Duration::from_secs(0) {
-                tracing::info!(to = %self.client_config.server_addr.as_ref().unwrap(), "connecting");
+                tracing::info!(to = %self.client_config.server_addr, "connecting");
             } else {
                 tracing::info!(reconnect_in = ?backoff, "reconnecting");
                 tokio::time::sleep(backoff).await;
             }
 
             let try_connect = async {
-                let target = self.client_config.server_addr.clone().unwrap();
+                let target = self.client_config.server_addr.clone();
                 let tenant = self.client_config.namespace.clone();
                 let labels = self.client_config.labels.clone();
 
@@ -144,12 +112,6 @@ impl Connection {
                 }
             };
         }
-    }
-
-    pub(crate) async fn next_server_request(
-        &mut self,
-    ) -> crate::api::error::Result<Box<dyn Request>> {
-        payload_helper::build_server_request(self.next_server_req_payload().await)
     }
 
     /// Listen a server_request from server by bi_receiver
@@ -203,12 +165,12 @@ impl Connection {
     pub(crate) async fn send_client_req(
         &mut self,
         req: impl Request + serde::Serialize,
-    ) -> crate::api::error::Result<Box<dyn Response>> {
+    ) -> crate::api::error::Result<Box<Payload>> {
         match self.state {
             State::Connected { ref mut client, .. } => {
                 let req_payload = payload_helper::build_req_grpc_payload(req);
-                let resp_payload = client.request(&req_payload);
-                payload_helper::build_server_response(resp_payload.unwrap())
+                let resp_payload = client.request(&req_payload).unwrap();
+                Ok(Box::new(resp_payload))
             }
             State::Disconnected(_) => {
                 self.connect().await;
@@ -224,6 +186,8 @@ impl Connection {
 mod tests {
     use crate::api::client_config::ClientConfig;
     use crate::common::remote::conn::Connection;
+    use crate::common::remote::request::server_request::ClientDetectionServerRequest;
+    use crate::common::remote::request::TYPE_CLIENT_DETECTION_SERVER_REQUEST;
     use crate::common::util::payload_helper;
 
     #[tokio::test]
@@ -240,7 +204,12 @@ mod tests {
         println!("test_next_payload");
         let mut remote_connect =
             Connection::new(ClientConfig::new().server_addr("0.0.0.0:9848".to_string()));
-        let server_req = remote_connect.next_server_request().await.unwrap();
+        let server_req_payload = remote_connect.next_server_req_payload().await;
+        let (type_url, headers, body_json_str) = payload_helper::covert_payload(server_req_payload);
+        if TYPE_CLIENT_DETECTION_SERVER_REQUEST.eq(&type_url) {
+            let de = ClientDetectionServerRequest::from(body_json_str.as_str());
+            let de = de.headers(headers);
+        }
     }
 
     #[tokio::test]

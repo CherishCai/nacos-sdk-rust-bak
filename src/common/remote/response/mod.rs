@@ -12,9 +12,13 @@ pub(crate) trait Response {
 }
 
 lazy_static! {
+    /// com.alibaba.nacos.api.remote.response.ErrorResponse
+    pub static ref TYPE_ERROR_SERVER_RESPONSE: String = String::from("ErrorResponse");
+
     /// com.alibaba.nacos.api.remote.response.ServerCheckResponse
     pub static ref TYPE_SERVER_CHECK_SERVER_RESPONSE: String = String::from("ServerCheckResponse");
 
-    /// com.alibaba.nacos.api.remote.response.ErrorResponse
-    pub static ref TYPE_ERROR_SERVER_RESPONSE: String = String::from("ErrorResponse");
+    /// com.alibaba.nacos.api.remote.response.HealthCheckResponse
+    pub static ref TYPE_HEALTH_CHECK_SERVER_RESPONSE: String = String::from("HealthCheckResponse");
+
 }

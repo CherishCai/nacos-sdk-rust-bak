@@ -33,6 +33,18 @@ impl ConnectResetServerRequest {
             serverPort: server_port,
         }
     }
+
+    /// Sets the headers.
+    pub fn headers(self, headers: HashMap<String, String>) -> Self {
+        ConnectResetServerRequest { headers, ..self }
+    }
+}
+
+impl From<&str> for ConnectResetServerRequest {
+    fn from(json_str: &str) -> Self {
+        let de: serde_json::Result<Self> = serde_json::from_str(json_str);
+        de.unwrap()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,5 +72,17 @@ impl ClientDetectionServerRequest {
             requestId: generate_request_id(),
             headers: HashMap::new(),
         }
+    }
+
+    /// Sets the headers.
+    pub fn headers(self, headers: HashMap<String, String>) -> Self {
+        ClientDetectionServerRequest { headers, ..self }
+    }
+}
+
+impl From<&str> for ClientDetectionServerRequest {
+    fn from(json_str: &str) -> Self {
+        let de: serde_json::Result<Self> = serde_json::from_str(json_str);
+        de.unwrap()
     }
 }

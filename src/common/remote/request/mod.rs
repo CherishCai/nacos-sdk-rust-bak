@@ -21,6 +21,9 @@ lazy_static! {
     /// com.alibaba.nacos.api.remote.request.ConnectionSetupRequest
     pub static ref TYPE_CONNECT_SETUP_CLIENT_REQUEST: String = String::from("ConnectionSetupRequest");
 
+    /// com.alibaba.nacos.api.remote.request.HealthCheckRequest
+    pub static ref TYPE_HEALTH_CHECK_CLIENT_REQUEST: String = String::from("HealthCheckRequest");
+
     /// com.alibaba.nacos.api.remote.request.ConnectResetRequest
     pub static ref TYPE_CONNECT_RESET_SERVER_REQUEST: String = String::from("ConnectResetRequest");
 

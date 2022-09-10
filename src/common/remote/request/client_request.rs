@@ -70,3 +70,32 @@ impl ConnectionSetupClientRequest {
         ConnectionSetupClientRequest { labels, ..self }
     }
 }
+
+/// HealthCheck from client, default keep alive time 5s.
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct HealthCheckClientRequest {
+    requestId: String,
+    /// count be empty.
+    headers: HashMap<String, String>,
+}
+
+impl Request for HealthCheckClientRequest {
+    fn get_request_id(&self) -> &String {
+        &self.requestId
+    }
+    fn get_headers(&self) -> &HashMap<String, String> {
+        &self.headers
+    }
+    fn get_type_url(&self) -> &String {
+        &TYPE_HEALTH_CHECK_CLIENT_REQUEST
+    }
+}
+
+impl HealthCheckClientRequest {
+    pub fn new() -> Self {
+        HealthCheckClientRequest {
+            requestId: generate_request_id(),
+            headers: HashMap::new(),
+        }
+    }
+}
