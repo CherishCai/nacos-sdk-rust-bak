@@ -184,7 +184,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_config_service() {
-        let mut config_service = NacosConfigService::new(ClientConfig::new());
+        let mut config_service = NacosConfigService::new(
+            ClientConfig::new()
+                .server_addr("0.0.0.0:9848".to_string())
+                .client_name("test-client-name"),
+        );
         config_service.start().await;
         let config =
             config_service.get_config("hongwen.properties".to_string(), "LOVE".to_string(), 3000);

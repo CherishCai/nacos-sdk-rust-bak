@@ -40,22 +40,19 @@ impl ConfigResponse {
 
 pub struct ConfigServiceBuilder {
     client_config: client_config::ClientConfig,
-
 }
 
 impl Default for ConfigServiceBuilder {
     fn default() -> Self {
         ConfigServiceBuilder {
-            client_config : client_config::ClientConfig::new(),
+            client_config: client_config::ClientConfig::new(),
         }
     }
 }
 
 impl ConfigServiceBuilder {
     pub fn new(client_config: client_config::ClientConfig) -> Self {
-        ConfigServiceBuilder {
-            client_config,
-        }
+        ConfigServiceBuilder { client_config }
     }
 
     /// Builds a new [`ConfigService`].
@@ -68,8 +65,8 @@ impl ConfigServiceBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::config::ConfigServiceBuilder;
     use crate::api::config::ConfigService;
+    use crate::api::config::ConfigServiceBuilder;
     use std::time::Duration;
     use tokio::time::sleep;
 
