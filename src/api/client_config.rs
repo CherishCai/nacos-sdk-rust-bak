@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /// Configures settings for Client.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct ClientConfig {
     /// server_addr like 127.0.0.1:9848
     pub(crate) server_addr: String,

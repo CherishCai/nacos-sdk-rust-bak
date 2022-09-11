@@ -37,6 +37,9 @@ lazy_static! {
     /// com.alibaba.nacos.api.config.remote.request.ConfigBatchListenRequest
     pub static ref TYPE_CONFIG_BATCH_LISTEN_CLIENT_REQUEST: String = String::from("ConfigBatchListenRequest");
 
+    /// com.alibaba.nacos.api.config.remote.request.ConfigQueryRequest
+    pub static ref TYPE_CONFIG_QUERY_CLIENT_REQUEST: String = String::from("ConfigQueryRequest");
+
 }
 
 // odd by client request id.

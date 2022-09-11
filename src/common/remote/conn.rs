@@ -16,7 +16,6 @@ use crate::common::remote::response::Response;
 use crate::common::util::*;
 use crate::nacos_proto::v2::{BiRequestStreamClient, Payload, RequestClient};
 
-#[derive(Clone)]
 pub struct Connection {
     client_config: ClientConfig,
     state: State,
@@ -28,10 +27,11 @@ pub struct Connection {
 // stream just adds a heap pointer dereference, slightly penalizing polling
 // the stream in most cases. so, don't listen to clippy on this.
 #[allow(clippy::large_enum_variant)]
-#[derive(Clone)]
 enum State {
     Connected {
+        target: String,
         conn_id: String,
+        channel: grpcio::Channel,
         client: RequestClient,
         bi_client: BiRequestStreamClient,
         bi_sender: Arc<Mutex<grpcio::ClientDuplexSender<Payload>>>,
@@ -50,7 +50,7 @@ impl Connection {
         }
     }
 
-    async fn connect(&mut self) {
+    pub(crate) async fn connect(&mut self) {
         const MAX_BACKOFF: Duration = Duration::from_secs(5);
 
         while let State::Disconnected(backoff) = self.state {
@@ -91,7 +91,9 @@ impl Connection {
                     .await?;
 
                 Ok::<State, Box<dyn Error + Send + Sync>>(State::Connected {
+                    target,
                     conn_id: String::from(conn_id.unwrap()),
+                    channel,
                     client,
                     bi_client,
                     bi_sender: Arc::new(Mutex::new(client_sender)),
@@ -178,6 +180,18 @@ impl Connection {
                     "Disconnected, please try again.",
                 )))
             }
+        }
+    }
+
+    /// Get a RequestClient, which use the core channel of connection.
+    pub(crate) fn get_client(&mut self) -> crate::api::error::Result<RequestClient> {
+        match self.state {
+            State::Connected {
+                ref mut channel, ..
+            } => Ok(RequestClient::new(channel.clone())),
+            State::Disconnected(_) => Err(crate::api::error::Error::ClientShutdown(String::from(
+                "Disconnected, please try later.",
+            ))),
         }
     }
 }

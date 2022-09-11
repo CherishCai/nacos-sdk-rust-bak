@@ -72,3 +72,40 @@ impl ConfigListenContext {
         }
     }
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct ConfigQueryClientRequest {
+    requestId: String,
+    /// count be empty.
+    headers: HashMap<String, String>,
+    /// DataId
+    dataId: String,
+    /// Group
+    group: String,
+    /// tenant
+    tenant: String,
+}
+
+impl Request for ConfigQueryClientRequest {
+    fn get_request_id(&self) -> &String {
+        &self.requestId
+    }
+    fn get_headers(&self) -> &HashMap<String, String> {
+        &self.headers
+    }
+    fn get_type_url(&self) -> &String {
+        &TYPE_CONFIG_QUERY_CLIENT_REQUEST
+    }
+}
+
+impl ConfigQueryClientRequest {
+    pub fn new(data_id: String, group: String, tenant: String) -> Self {
+        ConfigQueryClientRequest {
+            requestId: generate_request_id(),
+            headers: HashMap::new(),
+            dataId: data_id,
+            group,
+            tenant,
+        }
+    }
+}
