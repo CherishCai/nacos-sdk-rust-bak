@@ -187,7 +187,7 @@ mod tests {
         let mut config_service = NacosConfigService::new(
             ClientConfig::new()
                 .server_addr("0.0.0.0:9848".to_string())
-                .client_name("test-client-name"),
+                .app_name("test-app-name"),
         );
         config_service.start().await;
         let config =

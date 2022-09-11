@@ -6,8 +6,8 @@ pub struct ClientConfig {
     /// server_addr like 127.0.0.1:9848
     pub(crate) server_addr: String,
     pub(crate) namespace: String,
-    /// client_name maybe the same as app_name
-    pub(crate) client_name: Option<String>,
+    /// app_name
+    pub(crate) app_name: Option<String>,
     /// metadata
     pub(crate) labels: HashMap<String, String>,
 }
@@ -19,7 +19,7 @@ impl ClientConfig {
             server_addr: String::from(crate::api::constants::DEFAULT_SERVER_ADDR),
             /// public is "", Should define a more meaningful namespace
             namespace: String::from(""),
-            client_name: None,
+            app_name: None,
             labels: HashMap::default(),
         }
     }
@@ -36,10 +36,10 @@ impl ClientConfig {
         self
     }
 
-    /// Sets the client_name(app_name).
-    pub fn client_name(mut self, client_name: impl Into<String>) -> Self {
-        let name = client_name.into();
-        self.client_name = Some(name.clone());
+    /// Sets the app_name.
+    pub fn app_name(mut self, app_name: impl Into<String>) -> Self {
+        let name = app_name.into();
+        self.app_name = Some(name.clone());
         self.labels
             .insert(crate::api::constants::KEY_LABEL_APP_NAME.to_string(), name);
         self
