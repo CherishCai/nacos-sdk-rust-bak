@@ -4,7 +4,7 @@ mod server_request;
 mod server_response;
 
 use crate::api::client_config::ClientConfig;
-use crate::api::{ConfigResponse, ConfigService};
+use crate::api::config::{ConfigResponse, ConfigService};
 use crate::common::remote::conn::Connection;
 use crate::common::remote::request::server_request::*;
 use crate::common::remote::request::*;
@@ -72,6 +72,7 @@ impl NacosConfigService {
                                     connection
                                         .reply_client_resp(ConnectResetClientResponse::new(de.get_request_id().clone()))
                                         .await;
+                                    // todo reset connection
                                 } else {
                                     // publish a server_req_payload, server_req_payload_rx receive it once.
                                     if let Err(_) = server_req_payload_tx.send((type_url, headers, body_json_str)).await {
@@ -98,10 +99,10 @@ impl NacosConfigService {
                                     println!(
                                         "receiver config change, dataId={},group={},namespace={}",
                                         &server_req.dataId, &server_req.group, tenant.clone()
-                                    )
+                                    );
                                     // todo notify config change
                                 } else {
-                                    tracing::error!("unknown receiver type_url={}", type_url)
+                                    tracing::warn!("unknown receive type_url={}, maybe sdk have to upgrade!", type_url);
                                 }
                             },
                         }
@@ -144,33 +145,39 @@ impl ConfigService for NacosConfigService {
         data_id: String,
         group: String,
     ) -> crate::api::error::Result<std::sync::mpsc::Receiver<ConfigResponse>> {
-        // todo 抽离到统一的发起地方
-        let req = ConfigBatchListenClientRequest::new(true);
-        let req = req.add_config_listen_context(ConfigListenContext::new(
-            data_id,
-            group,
-            self.client_config.namespace.clone(),
-            String::from(""),
-        ));
-        // todo 抽离到统一的发起地方，取得结果
-        let req_payload = payload_helper::build_req_grpc_payload(req);
-        let _resp_payload = self
-            .client
-            .as_ref()
-            .expect("Disconnected, please try later.")
-            .request(&req_payload)
-            .unwrap();
+        if self.client.is_some() {
+            // todo 抽离到统一的发起地方
+            let req = ConfigBatchListenClientRequest::new(true);
+            let req = req.add_config_listen_context(ConfigListenContext::new(
+                data_id,
+                group,
+                self.client_config.namespace.clone(),
+                String::from(""),
+            ));
+            // todo 抽离到统一的发起地方，取得结果
+            let req_payload = payload_helper::build_req_grpc_payload(req);
+            let _resp_payload = self
+                .client
+                .as_ref()
+                .expect("Disconnected, please try later.")
+                .request(&req_payload)
+                .unwrap();
 
-        let (tx, rx) = std::sync::mpsc::channel();
-        self.config_listen_tx_vec.push(tx);
-        return Ok(rx);
+            let (tx, rx) = std::sync::mpsc::channel();
+            self.config_listen_tx_vec.push(tx);
+            Ok(rx)
+        } else {
+            Err(crate::api::error::Error::ClientShutdown(String::from(
+                "Disconnected, please try later.",
+            )))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::api::client_config::ClientConfig;
-    use crate::api::ConfigService;
+    use crate::api::config::ConfigService;
     use crate::config::NacosConfigService;
     use std::time::Duration;
     use tokio::time::sleep;
@@ -186,13 +193,13 @@ mod tests {
             .listen("hongwen.properties".to_string(), "LOVE".to_string())
             .unwrap();
         std::thread::Builder::new()
-            .name("config-remote-client".into())
+            .name("wait-listen-rx".into())
             .spawn(|| {
                 for resp in rx {
                     println!("listen the config {}", resp.get_content());
                 }
             })
-            .expect("config-remote-client could not spawn thread");
+            .expect("wait-listen-rx could not spawn thread");
 
         sleep(Duration::from_secs(30)).await;
     }
