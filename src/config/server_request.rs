@@ -3,14 +3,15 @@ use crate::common::remote::request::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ConfigChangeNotifyServerRequest {
     requestId: String,
     /// count be empty.
     headers: HashMap<String, String>,
     pub(crate) dataId: String,
     pub(crate) group: String,
-    pub(crate) tenant: String,
+    /// "public" or "" maybe None, must be careful about compatibility
+    pub(crate) tenant: Option<String>,
 }
 
 impl Request for ConfigChangeNotifyServerRequest {

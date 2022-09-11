@@ -3,7 +3,7 @@ use crate::common::remote::request::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ServerCheckClientRequest {
     requestId: String,
     /// count be empty.
@@ -31,7 +31,7 @@ impl ServerCheckClientRequest {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ConnectionSetupClientRequest {
     requestId: String,
     /// count be empty.
@@ -72,7 +72,7 @@ impl ConnectionSetupClientRequest {
 }
 
 /// HealthCheck from client, default keep alive time 5s.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct HealthCheckClientRequest {
     requestId: String,
     /// count be empty.

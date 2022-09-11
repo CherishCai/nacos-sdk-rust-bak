@@ -17,6 +17,7 @@ impl ClientConfig {
     pub fn new() -> Self {
         ClientConfig {
             server_addr: String::from(crate::api::constants::DEFAULT_SERVER_ADDR),
+            /// public is "", Should define a more meaningful namespace
             namespace: String::from(""),
             client_name: None,
             labels: HashMap::default(),

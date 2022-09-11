@@ -33,6 +33,10 @@ lazy_static! {
     /// com.alibaba.nacos.api.config.remote.request.ConfigChangeNotifyRequest
     pub static ref TYPE_CONFIG_CHANGE_NOTIFY_SERVER_REQUEST: String = String::from("ConfigChangeNotifyRequest");
 
+    // --- config client req ---
+    /// com.alibaba.nacos.api.config.remote.request.ConfigBatchListenRequest
+    pub static ref TYPE_CONFIG_BATCH_LISTEN_CLIENT_REQUEST: String = String::from("ConfigBatchListenRequest");
+
 }
 
 // odd by client request id.
@@ -40,7 +44,7 @@ const SEQUENCE_INITIAL_VALUE: i64 = 1;
 const SEQUENCE_DELTA: i64 = 2;
 static ATOMIC_SEQUENCE: AtomicI64 = AtomicI64::new(SEQUENCE_INITIAL_VALUE);
 
-fn generate_request_id() -> String {
+pub(crate) fn generate_request_id() -> String {
     let seq = ATOMIC_SEQUENCE.fetch_add(SEQUENCE_DELTA, Ordering::Relaxed);
     if seq > i64::MAX - 1000 {
         ATOMIC_SEQUENCE.store(SEQUENCE_INITIAL_VALUE, Ordering::SeqCst);

@@ -2,7 +2,7 @@
 use crate::common::remote::response::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ConnectResetClientResponse {
     requestId: Option<String>,
     resultCode: i32,
@@ -47,7 +47,7 @@ impl ConnectResetClientResponse {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ClientDetectionClientResponse {
     requestId: Option<String>,
     resultCode: i32,

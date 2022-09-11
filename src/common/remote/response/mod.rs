@@ -32,4 +32,8 @@ lazy_static! {
     /// com.alibaba.nacos.api.config.remote.response.ConfigChangeNotifyResponse
     pub static ref TYPE_CONFIG_CHANGE_NOTIFY_CLIENT_RESPONSE: String = String::from("ConfigChangeNotifyResponse");
 
+    // --- config server resp ---
+    /// com.alibaba.nacos.api.config.remote.response.ConfigChangeBatchListenResponse
+    pub static ref TYPE_CONFIG_CHANGE_BATCH_LISTEN_RESPONSE: String = String::from("ConfigChangeBatchListenResponse");
+
 }

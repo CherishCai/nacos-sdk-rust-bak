@@ -3,7 +3,7 @@ use crate::common::remote::request::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ConnectResetServerRequest {
     requestId: String,
     /// count be empty.
@@ -47,7 +47,7 @@ impl From<&str> for ConnectResetServerRequest {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct ClientDetectionServerRequest {
     requestId: String,
     /// count be empty.
