@@ -1,17 +1,21 @@
 use crate::api::{client_config, error};
 
+pub(crate) type ListenFn = dyn Fn(ConfigResponse) + Send + Sync + 'static;
+
 pub trait ConfigService {
     /// Get config, return the content.
-    fn get_config(&self, data_id: String, group: String, timeout_ms: u32) -> error::Result<String>;
+    fn get_config(&self, data_id: String, group: String, timeout_ms: u64) -> error::Result<String>;
 
     /// Listen the config change.
     fn listen(
         &mut self,
         data_id: String,
         group: String,
-    ) -> error::Result<std::sync::mpsc::Receiver<ConfigResponse>>;
+        func: std::sync::Arc<ListenFn>,
+    ) -> error::Result<()>;
 }
 
+#[derive(Debug, Clone)]
 pub struct ConfigResponse {
     /// Namespace/Tenant
     namespace: String,
@@ -23,7 +27,43 @@ pub struct ConfigResponse {
     content: String,
 }
 
+impl std::fmt::Display for ConfigResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.content.len() > 30 {
+            let mut content = self.content.clone();
+            content.truncate(30);
+            content.push_str("...");
+            write!(
+                f,
+                "ConfigResponse(namespace={n},data_id={d},group={g},content={c})",
+                n = self.namespace,
+                d = self.data_id,
+                g = self.group,
+                c = content
+            )
+        } else {
+            write!(
+                f,
+                "ConfigResponse(namespace={n},data_id={d},group={g},content={c})",
+                n = self.namespace,
+                d = self.data_id,
+                g = self.group,
+                c = self.content
+            )
+        }
+    }
+}
+
 impl ConfigResponse {
+    pub fn new(data_id: String, group: String, namespace: String, content: String) -> Self {
+        ConfigResponse {
+            data_id,
+            group,
+            namespace,
+            content,
+        }
+    }
+
     pub fn get_namespace(&self) -> &String {
         &self.namespace
     }
@@ -67,6 +107,7 @@ impl ConfigServiceBuilder {
 mod tests {
     use crate::api::config::ConfigService;
     use crate::api::config::ConfigServiceBuilder;
+    use std::sync::Arc;
     use std::time::Duration;
     use tokio::time::sleep;
 
@@ -76,17 +117,14 @@ mod tests {
         let config =
             config_service.get_config("hongwen.properties".to_string(), "LOVE".to_string(), 3000);
         println!("get the config {}", config.expect("None"));
-        let rx = config_service
-            .listen("hongwen.properties".to_string(), "LOVE".to_string())
-            .unwrap();
-        std::thread::Builder::new()
-            .name("wait-listen-rx".into())
-            .spawn(|| {
-                for resp in rx {
-                    println!("listen the config {}", resp.get_content());
-                }
-            })
-            .expect("wait-listen-rx could not spawn thread");
+
+        let _listen = config_service.listen(
+            "hongwen.properties".to_string(),
+            "LOVE".to_string(),
+            Arc::new(|config_resp| {
+                println!("listen the config {}", config_resp.get_content());
+            }),
+        );
 
         sleep(Duration::from_secs(30)).await;
     }
