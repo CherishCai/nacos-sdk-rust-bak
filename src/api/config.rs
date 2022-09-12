@@ -123,7 +123,10 @@ mod tests {
         let mut config_service = ConfigServiceBuilder::default().build().await;
         let config =
             config_service.get_config("hongwen.properties".to_string(), "LOVE".to_string(), 3000);
-        tracing::info!("get the config {}", config.expect("None"));
+        match config {
+            Ok(config) => tracing::info!("get the config {}", config),
+            Err(err) => tracing::error!("get the config {:?}", err),
+        }
 
         let _listen = config_service.listen(
             "hongwen.properties".to_string(),
@@ -132,6 +135,10 @@ mod tests {
                 tracing::info!("listen the config {}", config_resp.get_content());
             }),
         );
+        match _listen {
+            Ok(_) => tracing::info!("listening the config"),
+            Err(err) => tracing::error!("listen config error {:?}", err),
+        }
 
         sleep(Duration::from_secs(30)).await;
     }

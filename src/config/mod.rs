@@ -98,8 +98,8 @@ impl NacosConfigService {
             .expect("config-remote-client could not spawn thread");
         self.conn_thread = Some(conn_thread);
 
-        // sleep 100ms, Make sure the link is established.
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        // sleep 1ms, Make sure the link is established.
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await
     }
 }
 
@@ -171,7 +171,10 @@ mod tests {
         config_service.start().await;
         let config =
             config_service.get_config("hongwen.properties".to_string(), "LOVE".to_string(), 3000);
-        tracing::info!("get the config {}", config.expect("None"));
+        match config {
+            Ok(config) => tracing::info!("get the config {}", config),
+            Err(err) => tracing::error!("get the config {:?}", err),
+        }
 
         let _listen = config_service.listen(
             "hongwen.properties".to_string(),
@@ -180,6 +183,10 @@ mod tests {
                 tracing::info!("listen the config {}", config_resp.get_content());
             }),
         );
+        match _listen {
+            Ok(_) => tracing::info!("listening the config"),
+            Err(err) => tracing::error!("listen config error {:?}", err),
+        }
 
         sleep(Duration::from_secs(30)).await;
     }
