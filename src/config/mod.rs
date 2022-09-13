@@ -75,24 +75,7 @@ impl NacosConfigService {
                             },
                             // receive a server_req from server_req_payload_tx
                             receive_server_req = server_req_payload_rx.recv() => {
-                                let (type_url, headers, body_str) = receive_server_req.unwrap();
-                                if TYPE_CONFIG_CHANGE_NOTIFY_SERVER_REQUEST.eq(&type_url) {
-                                    let server_req = ConfigChangeNotifyServerRequest::from(body_str.as_str()).headers(headers);
-                                    let server_req_id = server_req.get_request_id().clone();
-                                    let req_tenant = server_req.tenant.or(Some("".to_string())).unwrap();
-                                    tracing::info!(
-                                        "receiver config change, dataId={},group={},namespace={}",
-                                        &server_req.dataId,
-                                        &server_req.group,
-                                        req_tenant.clone()
-                                    );
-                                    // notify config change
-                                    client_worker.notify_config_change(server_req.dataId.to_string(), server_req.group.to_string(), req_tenant.clone());
-                                   // reply ConfigChangeNotifyClientResponse for ConfigChangeNotifyServerRequest
-                                    conn.reply_client_resp(ConfigChangeNotifyClientResponse::new(server_req_id)).await;
-                                } else {
-                                    tracing::warn!("unknown receive type_url={}, maybe sdk have to upgrade!", type_url);
-                                }
+                                Self::deal_extra_server_req(&mut client_worker, &mut conn, receive_server_req.unwrap()).await
                             },
                         }
                     }
@@ -102,6 +85,39 @@ impl NacosConfigService {
 
         // sleep 6ms, Make sure the link is established.
         tokio::time::sleep(std::time::Duration::from_millis(6)).await
+    }
+
+    async fn deal_extra_server_req(
+        client_worker: &mut ConfigWorker,
+        conn: &mut Connection,
+        (type_url, headers, body_str): (String, std::collections::HashMap<String, String>, String),
+    ) {
+        if TYPE_CONFIG_CHANGE_NOTIFY_SERVER_REQUEST.eq(&type_url) {
+            let server_req =
+                ConfigChangeNotifyServerRequest::from(body_str.as_str()).headers(headers);
+            let server_req_id = server_req.get_request_id().clone();
+            let req_tenant = server_req.tenant.or(Some("".to_string())).unwrap();
+            tracing::info!(
+                "receiver config change, dataId={},group={},namespace={}",
+                &server_req.dataId,
+                &server_req.group,
+                req_tenant.clone()
+            );
+            // notify config change
+            client_worker.notify_config_change(
+                server_req.dataId.to_string(),
+                server_req.group.to_string(),
+                req_tenant.clone(),
+            );
+            // reply ConfigChangeNotifyClientResponse for ConfigChangeNotifyServerRequest
+            conn.reply_client_resp(ConfigChangeNotifyClientResponse::new(server_req_id))
+                .await;
+        } else {
+            tracing::warn!(
+                "unknown receive type_url={}, maybe sdk have to upgrade!",
+                type_url
+            );
+        }
     }
 }
 
