@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "hongwen.properties".to_string(),
         "LOVE".to_string(),
         Box::new(|config_resp| {
-            tracing::info!("listen the config {}", config_resp.get_content());
+            tracing::info!("listen the config={:?}", config_resp);
         }),
     );
     match _listen {

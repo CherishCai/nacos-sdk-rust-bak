@@ -30,6 +30,8 @@ pub struct ConfigResponse {
     group: String,
     /// Content
     content: String,
+    /// Content's Type; e.g. json,properties,xml,html,text,yaml
+    content_type: String,
 }
 
 impl std::fmt::Display for ConfigResponse {
@@ -60,12 +62,19 @@ impl std::fmt::Display for ConfigResponse {
 }
 
 impl ConfigResponse {
-    pub fn new(data_id: String, group: String, namespace: String, content: String) -> Self {
+    pub fn new(
+        data_id: String,
+        group: String,
+        namespace: String,
+        content: String,
+        content_type: String,
+    ) -> Self {
         ConfigResponse {
             data_id,
             group,
             namespace,
             content,
+            content_type,
         }
     }
 
@@ -80,6 +89,9 @@ impl ConfigResponse {
     }
     pub fn get_content(&self) -> &String {
         &self.content
+    }
+    pub fn get_content_type(&self) -> &String {
+        &self.content_type
     }
 }
 
