@@ -1,6 +1,6 @@
 use crate::api::{client_config, error};
 
-pub(crate) type ConfigChangeListenFn = dyn Fn(ConfigResponse) + Send + Sync;
+pub(crate) type ConfigChangeListener = dyn Fn(ConfigResponse) + Send + Sync;
 
 pub trait ConfigService {
     /// Get config, return the content.
@@ -12,11 +12,11 @@ pub trait ConfigService {
     ) -> error::Result<String>;
 
     /// Listen the config change.
-    fn listen(
+    fn add_listener(
         &mut self,
         data_id: String,
         group: String,
-        func: Box<ConfigChangeListenFn>,
+        listener: Box<ConfigChangeListener>,
     ) -> error::Result<()>;
 }
 
@@ -140,7 +140,7 @@ mod tests {
             Err(err) => tracing::error!("get the config {:?}", err),
         }
 
-        let _listen = config_service.listen(
+        let _listen = config_service.add_listener(
             "hongwen.properties".to_string(),
             "LOVE".to_string(),
             Box::new(|config_resp| {

@@ -6,8 +6,8 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub(crate) struct ConfigWorker {
-    pub(crate) client_config: ClientConfig,
-    pub(crate) cache_data_map: Arc<Mutex<HashMap<String, CacheData>>>,
+    client_config: ClientConfig,
+    cache_data_map: Arc<Mutex<HashMap<String, CacheData>>>,
 }
 
 impl ConfigWorker {
@@ -36,7 +36,7 @@ impl ConfigWorker {
         data_id: String,
         group: String,
         tenant: String,
-        listener: Box<crate::api::config::ConfigChangeListenFn>,
+        listener: Box<crate::api::config::ConfigChangeListener>,
     ) {
         let group_key = util::group_key(&data_id, &group, &tenant);
         loop {
@@ -83,27 +83,29 @@ impl ConfigWorker {
 
 /// Cache Data for Config
 #[derive(Clone, Default)]
-pub(crate) struct CacheData {
-    pub(crate) data_id: String,
-    pub(crate) group: String,
-    pub(crate) tenant: String,
+struct CacheData {
+    data_id: String,
+    group: String,
+    tenant: String,
     /// Default text; text, json, properties, html, xml, yaml ...
-    pub(crate) content_type: String,
-    pub(crate) content: String,
-    pub(crate) md5: String,
+    content_type: String,
+    content: String,
+    md5: String,
     /// whether content was encrypted with encryptedDataKey.
-    pub(crate) encrypted_data_key: Option<String>,
-    pub(crate) last_modified: i64,
+    encrypted_data_key: Option<String>,
+    last_modified: i64,
 
+    /// There are some logical differences in the initialization phase, such as no notification of config changed
+    initializing: bool,
     /// Mark the cache config is not the latest, need to query the server for synchronize
-    pub(crate) need_sync_server: bool,
+    need_sync_server: bool,
 
     /// who listen of config change.
-    pub(crate) listeners: Arc<Mutex<Vec<Box<crate::api::config::ConfigChangeListenFn>>>>,
+    listeners: Arc<Mutex<Vec<Box<crate::api::config::ConfigChangeListener>>>>,
 }
 
 impl CacheData {
-    pub(crate) fn new(data_id: String, group: String, tenant: String) -> Self {
+    fn new(data_id: String, group: String, tenant: String) -> Self {
         Self {
             data_id,
             group,
@@ -114,7 +116,7 @@ impl CacheData {
     }
 
     /// Add listener.
-    pub(crate) fn add_listener(&mut self, listener: Box<crate::api::config::ConfigChangeListenFn>) {
+    fn add_listener(&mut self, listener: Box<crate::api::config::ConfigChangeListener>) {
         loop {
             let listen_lock = self.listeners.try_lock();
             if let Ok(mut mutex) = listen_lock {
@@ -125,7 +127,7 @@ impl CacheData {
     }
 
     /// Notify listener.
-    pub(crate) fn notify_listener(&mut self, config_response: ConfigResponse) {
+    fn notify_listener(&mut self, config_response: ConfigResponse) {
         loop {
             let listen_lock = self.listeners.try_lock();
             if let Ok(mut mutex) = listen_lock {

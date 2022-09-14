@@ -137,17 +137,17 @@ impl ConfigService for NacosConfigService {
         Ok(String::from(config_resp.get_content()))
     }
 
-    fn listen(
+    fn add_listener(
         &mut self,
         data_id: String,
         group: String,
-        func: Box<crate::api::config::ConfigChangeListenFn>,
+        listener: Box<crate::api::config::ConfigChangeListener>,
     ) -> crate::api::error::Result<()> {
         self.client_worker.add_listener(
             data_id.clone(),
             group.clone(),
             self.client_config.namespace.clone(),
-            func,
+            listener,
         );
         // todo 抽离到统一的发起地方，并取得结果
         let req = ConfigBatchListenClientRequest::new(true).add_config_listen_context(
@@ -190,7 +190,7 @@ mod tests {
             Err(err) => tracing::error!("get the config {:?}", err),
         }
 
-        let _listen = config_service.listen(
+        let _listen = config_service.add_listener(
             "hongwen.properties".to_string(),
             "LOVE".to_string(),
             Box::new(|config_resp| {
