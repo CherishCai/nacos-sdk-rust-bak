@@ -13,6 +13,7 @@ use crate::common::remote::request::client_request::{
 };
 use crate::common::remote::request::Request;
 use crate::common::remote::response::Response;
+use crate::common::util::payload_helper::PayloadInner;
 use crate::common::util::*;
 use crate::nacos_proto::v2::{BiRequestStreamClient, Payload, RequestClient};
 
@@ -171,12 +172,12 @@ impl Connection {
     pub(crate) async fn send_client_req(
         &mut self,
         req: impl Request + serde::Serialize,
-    ) -> crate::api::error::Result<Box<Payload>> {
+    ) -> crate::api::error::Result<Box<PayloadInner>> {
         match self.state {
             State::Connected { ref mut client, .. } => {
                 let req_payload = payload_helper::build_req_grpc_payload(req);
                 let resp_payload = client.request(&req_payload)?;
-                Ok(Box::new(resp_payload))
+                Ok(Box::new(payload_helper::covert_payload(resp_payload)))
             }
             State::Disconnected(_) => {
                 self.connect().await;
