@@ -1,6 +1,7 @@
 use crate::api::{client_config, error};
 
-pub(crate) type ConfigChangeListener = dyn Fn(ConfigResponse) + Send + Sync;
+/// Trait or closure better for config listener? Learn more about opensource rust sdk to make a decision.
+pub type ConfigChangeListener = dyn Fn(ConfigResponse) + Send + Sync + 'static;
 
 pub trait ConfigService {
     /// Get config, return the content.

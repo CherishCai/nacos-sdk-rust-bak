@@ -90,6 +90,7 @@ struct CacheData {
     /// Default text; text, json, properties, html, xml, yaml ...
     content_type: String,
     content: String,
+    /// Md5 compare the newest and old, to find out if the config has changed, and then execute the Listener
     md5: String,
     /// whether content was encrypted with encryptedDataKey.
     encrypted_data_key: Option<String>,
@@ -111,6 +112,8 @@ impl CacheData {
             group,
             tenant,
             content_type: "text".to_string(),
+            initializing : true,
+            need_sync_server: true,
             ..Default::default()
         }
     }
