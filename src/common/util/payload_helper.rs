@@ -118,8 +118,11 @@ pub(crate) fn covert_payload(payload: Payload) -> PayloadInner {
 
 #[cfg(test)]
 mod tests {
+    use crate::common::remote::request::client_request::ServerCheckClientRequest;
+    use crate::common::remote::request::Request;
     use crate::common::remote::response::server_response::ServerCheckServerResponse;
     use crate::common::remote::response::Response;
+    use crate::common::util::payload_helper;
 
     #[test]
     fn it_works_serde_json() {
@@ -133,5 +136,38 @@ mod tests {
         let resp: ServerCheckServerResponse = serde_json::from_str(data).unwrap();
         println!("serde_json resp {:?}", resp);
         assert_eq!(resp.get_request_id().unwrap().as_str(), "666");
+    }
+
+    #[test]
+    fn test_covert_payload1() {
+        let data = r#"
+        {
+            "connectionId": "uuid",
+            "requestId": "666",
+            "resultCode": 200,
+            "errorCode": 0
+        }"#;
+        let resp: ServerCheckServerResponse = serde_json::from_str(data).unwrap();
+        let resp_type_url = resp.get_type_url().to_string();
+
+        let payload = payload_helper::build_resp_grpc_payload(resp);
+        let payload_inner = payload_helper::covert_payload(payload);
+
+        println!("test_covert_payload1, type_url {}", &payload_inner.type_url);
+        assert_eq!(resp_type_url, payload_inner.type_url);
+    }
+
+    #[test]
+    fn test_covert_payload2() {
+        let data = "{\"requestId\":\"666\",\"headers\":{}}";
+        let req: ServerCheckClientRequest = serde_json::from_str(data).unwrap();
+        let req_type_url = req.get_type_url().to_string();
+
+        let payload = payload_helper::build_req_grpc_payload(req);
+        let payload_inner = payload_helper::covert_payload(payload);
+
+        println!("test_covert_payload2, type_url {}", &payload_inner.type_url);
+        assert_eq!(req_type_url, payload_inner.type_url);
+        assert_eq!(data, payload_inner.body_str.as_str());
     }
 }
