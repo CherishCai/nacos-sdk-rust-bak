@@ -118,6 +118,7 @@ pub(crate) fn covert_payload(payload: Payload) -> PayloadInner {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use crate::common::remote::request::client_request::ServerCheckClientRequest;
     use crate::common::remote::request::Request;
     use crate::common::remote::response::server_response::ServerCheckServerResponse;
@@ -169,5 +170,6 @@ mod tests {
         println!("test_covert_payload2, type_url {}", &payload_inner.type_url);
         assert_eq!(req_type_url, payload_inner.type_url);
         assert_eq!(data, payload_inner.body_str.as_str());
+        assert_eq!(HashMap::new(), payload_inner.headers);
     }
 }
