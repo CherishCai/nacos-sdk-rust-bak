@@ -225,10 +225,10 @@ mod tests {
         let mut remote_connect =
             Connection::new(ClientConfig::new().server_addr("0.0.0.0:9848".to_string()));
         let server_req_payload = remote_connect.next_server_req_payload().await;
-        let (type_url, headers, body_json_str) = payload_helper::covert_payload(server_req_payload);
-        if TYPE_CLIENT_DETECTION_SERVER_REQUEST.eq(&type_url) {
-            let de = ClientDetectionServerRequest::from(body_json_str.as_str());
-            let de = de.headers(headers);
+        let payload_inner = payload_helper::covert_payload(server_req_payload);
+        if TYPE_CLIENT_DETECTION_SERVER_REQUEST.eq(&payload_inner.type_url) {
+            let de = ClientDetectionServerRequest::from(payload_inner.body_str.as_str());
+            let de = de.headers(payload_inner.headers);
             remote_connect
                 .reply_client_resp(ClientDetectionClientResponse::new(
                     de.get_request_id().clone(),

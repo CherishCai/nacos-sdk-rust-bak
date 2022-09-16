@@ -6,6 +6,16 @@ use crate::nacos_proto::v2::{Metadata, Payload};
 use serde::Serialize;
 use std::collections::HashMap;
 
+/// Payload Inner Model
+pub(crate) struct PayloadInner {
+    /// The data type of `body_str`
+    pub(crate) type_url: String,
+    /// Headers
+    pub(crate) headers: HashMap<String, String>,
+    /// json data
+    pub(crate) body_str: String,
+}
+
 pub(crate) fn build_req_grpc_payload(req: impl Request + Serialize) -> Payload {
     tracing::debug!(
         "build_req_grpc_payload {} request_id={}",
@@ -91,15 +101,19 @@ pub(crate) fn build_server_request(
     Err(crate::api::error::Error::Deserialization(type_url))
 }
 
-/// (type_url, headers, body_str)
-pub(crate) fn covert_payload(payload: Payload) -> (String, HashMap<String, String>, String) {
+/// Covert payload to PayloadInner {type_url, headers, body_str}
+pub(crate) fn covert_payload(payload: Payload) -> PayloadInner {
     let metadata = payload.metadata.unwrap();
     let body_data = payload.body.unwrap().value;
     let type_url = metadata.r#type;
     let headers = metadata.headers;
     let body_str = String::from_utf8(body_data).unwrap();
     tracing::debug!("covert_payload {} with {}", type_url, body_str);
-    return (type_url, headers, body_str);
+    PayloadInner {
+        type_url,
+        headers,
+        body_str,
+    }
 }
 
 #[cfg(test)]
